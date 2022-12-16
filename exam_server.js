@@ -23,7 +23,7 @@ const axios = require('axios')
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 var builder = require('xmlbuilder');
-var appurl = 'vibhuteenterprises.com'
+var appurl = 'ravatti.ddns.net'
 const xxurl = 'http://'+appurl+':7000/'
 
 var mongoDB = 'mongodb://pmg:123456@'+appurl+':27017/pmg?authSource=pmg';
