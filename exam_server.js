@@ -20,12 +20,18 @@ const url = 'https://www.pmgdisha.in/app/login';
 const { PendingXHR } = require('pending-xhr-puppeteer');
 const mongoose = require("mongoose");
 const axios = require('axios')
-const puppeteer = require('puppeteer');
+//const puppeteer = require('puppeteer');
 const fs = require('fs');
 var builder = require('xmlbuilder');
 var appurl = 'ravatti.ddns.net'
 const xxurl = 'http://'+appurl+':7000/'
+const Captcha = require("2captcha")
+const puppeteer = require('puppeteer-extra')
 
+// add recaptcha plugin and provide it your 2captcha token (= their apiKey)
+// 2captcha is the builtin solution provider but others would work as well.
+// Please note: You need to add funds to your 2captcha account for this to work
+const RecaptchaPlugin = require('puppeteer-extra-plugin-recaptcha')
 var mongoDB = 'mongodb://pmg:123456@'+appurl+':27017/pmg?authSource=pmg';
 var SECRET_HASH ='YmVuZXRiaGFza2FyYW5hbnRvbnkhQMKjJCVeJiooKQ=='
 const createTestUser = require('_helpers/create-test-user');
@@ -39,8 +45,10 @@ app.use(cors({ origin: (origin, callback) => callback(null, true), credentials: 
 app.use('/users', require('./users/users.controller'));
 app.use('/api-docs', require('_helpers/swagger'));
 app.use(errorHandler);
+const {executablePath} = require('puppeteer')
 
-
+//6LexQq4ZAAAAAMUmVT8mfiuFaeX-oT7gw8Rmchpi
+//const solver = new Captcha.Solver("341109ff13ddbccec56410d663987fd6")
 
 async function run(examID,Epassword,parent,socket){
 await io.to(socket).emit('exam','Get Started...')
@@ -101,24 +109,38 @@ await io.to(socket).emit('exam','Get Started...')
 async function benet(username, password,socket) {
     return new Promise(function(resolve, reject) {
 
+puppeteer.use(
+  RecaptchaPlugin({
+    provider: {
+      id: '2captcha',
+      token: '341109ff13ddbccec56410d663987fd6' // REPLACE THIS WITH YOUR OWN 2CAPTCHA API KEY ⚡
+    },
+    visualFeedback: true // colorize reCAPTCHAs (violet = detected, green = solved)
+  })
+)
   // await io.to(socket).emit('exam','Automation Start')
-    try {
+        try {
+       // puppeteer.use(hidden())
         puppeteer.launch({
-            headless: true,
+            headless: false,
             devtools: true,
             args: ['--no-sandbox'],
+            ignoreHTTPSErrors: true,
+
+    // add this
+    executablePath: executablePath(),
 
         }).then(async browser => {
 
-            process.on('uncaughtException',async (err) => {
+            process.on('uncaughtException', async (err) => {
        await io.to(socket).emit('exam', 'Error Start Again')
       await browser.close();
     })
-    process.on('ProtocolError',async (err) => {
+            process.on('ProtocolError', async (err) => {
        await io.to(socket).emit('exam', 'Error Start Again')
       await  browser.close();
     })
-    process.on('ProtocolError',async (Error) => {
+            process.on('ProtocolError', async (Error) => {
        await io.to(socket).emit('exam', 'Error Start Again')
       await  browser.close();
     })
@@ -131,17 +153,23 @@ async function benet(username, password,socket) {
             await page.setExtraHTTPHeaders({
                 'Accept-Language': 'en-US,en;q=0.9'
             });
-           await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36');
+            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36');
+           
             await page.waitForSelector('#inputEmail')
-            await page.type('#inputEmail', username, { delay: 100 })
+            await page.type('#inputEmail', 'MARA00064084479', { delay: 100 })
             
             await page.waitForSelector('#lgpass1')
-            await page.type('#lgpass1', password, { delay: 100 })
-            const logi = await page.waitForSelector('#loginForm > input.btn.btn-default.btn-block', {
+            await page.type('#lgpass1', 'riT7LEdhZNDJX1Tk', { delay: 100 })
+            //await page.setJavaScriptEnabled(false)
+            const logi = await page.waitForSelector('#captcha', {
                 timeout: 1000
             })
+            
+            await page.click('#captcha')
+            await page.solveRecaptchas()
 
-            await page.click('#loginForm > input.btn.btn-default.btn-block')
+          //  await page.setJavaScriptEnabled(false)
+            await page.waitForTimeout(2000);
             if (logi) {
                await io.to(socket).emit('exam','Entering Login credentials')
             } else {
@@ -282,31 +310,32 @@ async function benet(username, password,socket) {
             await page1.waitForSelector('#check')
             await page1.click('#check')
             await io.to(socket).emit('exam','Invaligator Thumbp Check')
-            await page1.waitForTimeout(1000)
+            await page1.waitForTimeout(3000)
             await page1.waitForSelector('#start_cap')
             await page1.click('#start_cap')
-            await page1.waitForTimeout(5000);
+            await page1.waitForTimeout(7000);
             await io.to(socket).emit('exam','Invaligator Thumbp Capture')
             await page1.waitForSelector('button[type="button"]')
             await page1.click('button[type="button"]')
             await io.to(socket).emit('exam','Invaligator Thumbp Captured')
-            await page1.waitForTimeout(5000)
+            await page1.waitForTimeout(7000)
             //console.log('Student Thumb Start')
             await page1.waitForSelector('#check')
             await io.to(socket).emit('exam','student thumb check')
             await page1.click('#check')
-            await page1.waitForTimeout(2000)
+            await page1.waitForTimeout(4000)
             await page1.waitForSelector('#start_cap')
             await page1.click('#start_cap')
             await io.to(socket).emit('exam','student thumb Captured')
-            await page1.waitForTimeout(5000)
+            await page1.waitForTimeout(7000)
 //await page1.waitForNavigation()
             //console.log('ssss')
-            await page1.waitForTimeout(3000)
+            await page1.waitForTimeout(5000)
 
-            await io.to(socket).emit('exam','Generating Exam Link')
+            await io.to(socket).emit('exam', 'Generating Exam Link')
+            await page1.waitForSelector('#titlewebcam')
                 await page1.click('#titlewebcam')
-                await page1.waitForTimeout(2000)
+                await page1.waitForTimeout(5000)
 
               const code1 = await page1.$x('//script[contains(., "sebs")]')
   const content = await page1.evaluate(el => el.innerHTML, code1[0]);
@@ -314,9 +343,10 @@ async function benet(username, password,socket) {
   s = s.substring(0, s.indexOf('&agent=chrome,'));
   var str = s;
   str = str.substring(str.indexOf("launchUri(") + 11);
-  //console.log(str)
+            console.log(str)
+            await page1.waitForTimeout(2000)
             resolve(str)
-            //await browser.close();
+            await browser.close();
              
            
             
