@@ -115,14 +115,14 @@ puppeteer.use(
       id: '2captcha',
       token: '341109ff13ddbccec56410d663987fd6' // REPLACE THIS WITH YOUR OWN 2CAPTCHA API KEY ⚡
     },
-    visualFeedback: true // colorize reCAPTCHAs (violet = detected, green = solved)
+    visualFeedback:false // colorize reCAPTCHAs (violet = detected, green = solved)
   })
 )
   // await io.to(socket).emit('exam','Automation Start')
         try {
        // puppeteer.use(hidden())
         puppeteer.launch({
-            headless: false,
+            headless: true,
             devtools: true,
             args: ['--no-sandbox'],
             ignoreHTTPSErrors: true,
@@ -133,14 +133,17 @@ puppeteer.use(
         }).then(async browser => {
 
             process.on('uncaughtException', async (err) => {
+		    console.log(err)
        await io.to(socket).emit('exam', 'Error Start Again')
       await browser.close();
     })
             process.on('ProtocolError', async (err) => {
+		    console.log(err)
        await io.to(socket).emit('exam', 'Error Start Again')
       await  browser.close();
     })
             process.on('ProtocolError', async (Error) => {
+		    console.log(err)
        await io.to(socket).emit('exam', 'Error Start Again')
       await  browser.close();
     })
@@ -156,10 +159,10 @@ puppeteer.use(
             await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36');
            
             await page.waitForSelector('#inputEmail')
-            await page.type('#inputEmail', 'MARA00064084479', { delay: 100 })
+            await page.type('#inputEmail', username, { delay: 100 })
             
             await page.waitForSelector('#lgpass1')
-            await page.type('#lgpass1', 'riT7LEdhZNDJX1Tk', { delay: 100 })
+            await page.type('#lgpass1',password, { delay: 100 })
             //await page.setJavaScriptEnabled(false)
             const logi = await page.waitForSelector('#captcha', {
                 timeout: 1000
@@ -169,7 +172,7 @@ puppeteer.use(
             await page.solveRecaptchas()
 
           //  await page.setJavaScriptEnabled(false)
-            await page.waitForTimeout(2000);
+            await page.waitForTimeout(20000);
             if (logi) {
                await io.to(socket).emit('exam','Entering Login credentials')
             } else {
@@ -306,7 +309,7 @@ puppeteer.use(
             } else {
                 await io.to(socket).emit('exam','Thumb Authentication In process')
             }
-            await page1.waitForTimeout(5000)
+            await page1.waitForTimeout(9000)
             await page1.waitForSelector('#check')
             await page1.click('#check')
             await io.to(socket).emit('exam','Invaligator Thumbp Check')
